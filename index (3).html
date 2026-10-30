@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Piso 13: Turno de Medianoche</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --noche:#15101d; --tinta:#1f1829; --tinta2:#2a2036;
+  --vino:#7a2342; --rosa:#e08aa3; --vela:#f3c97a;
+  --hueso:#efe6d8; --niebla:#a29eb5; --pantalla:#7fe3b0; --alerta:#ff6b6b;
+  --calma:100; /* se actualiza desde JS */
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{
+  background:radial-gradient(1200px 700px at 50% -10%, #2c1a33 0%, var(--noche) 60%);
+  color:var(--hueso);
+  font-family:"Lora",Georgia,serif;
+  font-size:1.05rem; line-height:1.7;
+  padding-bottom:3rem;
+}
+.vignette{
+  position:fixed; inset:0; pointer-events:none; z-index:5;
+  background:radial-gradient(ellipse at center, transparent 35%, #000 100%);
+  opacity:calc((100 - var(--calma)) / 100 * .85);
+  transition:opacity .8s;
+}
+header.top{
+  position:sticky; top:0; z-index:10;
+  display:flex; justify-content:space-between; align-items:center; gap:1rem;
+  padding:.8rem 1.2rem;
+  background:rgba(21,16,29,.92); backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--tinta2);
+}
+.brand{font-family:"IM Fell English",Georgia,serif; font-size:1.5rem; color:var(--vela)}
+.hud{display:flex; gap:1.2rem; font-weight:600}
+.hud b{color:var(--vela)}
+.meters{
+  max-width:760px; margin:1rem auto 0; padding:0 1.2rem;
+  display:grid; grid-template-columns:1fr 1fr; gap:1rem;
+}
+.meter{font-size:.9rem; color:var(--niebla)}
+.meter .bar{height:8px; border-radius:8px; background:var(--tinta2); margin-top:.25rem; overflow:hidden}
+.meter .bar i{display:block; height:100%; border-radius:8px; transition:width .6s}
+#barAmor{background:var(--rosa)}
+#barCalma{background:var(--vela)}
+main{max-width:760px; margin:1.2rem auto; padding:0 1.2rem}
+.card{
+  background:var(--tinta); border:1px solid var(--tinta2); border-radius:14px;
+  padding:1.6rem 1.5rem; box-shadow:0 12px 40px rgba(0,0,0,.45);
+}
+h1,h2{font-family:"IM Fell English",Georgia,serif; font-weight:400; line-height:1.15}
+h1{font-size:clamp(2.2rem,7vw,3.4rem); color:var(--vela); margin-bottom:.4rem}
+h2{font-size:clamp(1.6rem,5vw,2.1rem); color:var(--hueso); margin-bottom:.2rem}
+.lugar{color:var(--rosa); font-style:italic; margin-bottom:1rem}
+.card p{margin-bottom:.9rem}
+.card p.nar{color:#e6dccb}
+.card p.dialogo{border-left:3px solid var(--vino); padding-left:.9rem; color:#f4d9e1}
+.log{
+  font-family:Consolas,"Courier New",monospace; font-size:.88rem; line-height:1.5;
+  background:#0c0a11; color:var(--pantalla);
+  border:1px solid #1d3a2c; border-radius:8px; padding:.8rem 1rem; margin:1rem 0;
+  overflow-x:auto; white-space:pre;
+}
+.log .rojo{color:var(--alerta)}
+.pregunta{margin:1.2rem 0 .6rem; color:var(--vela); font-weight:600}
+.opciones{display:grid; gap:.7rem}
+button{font:inherit; cursor:pointer}
+.opt{
+  text-align:left; color:var(--hueso);
+  background:var(--tinta2); border:1px solid #3a2d4a; border-left:4px solid var(--vino);
+  border-radius:10px; padding:.85rem 1rem;
+  transition:background .2s, border-color .2s, transform .15s;
+}
+.opt:hover{background:#352944; border-left-color:var(--rosa)}
+.opt:active{transform:scale(.99)}
+.btn{
+  background:var(--vino); color:#fff; border:none; border-radius:10px;
+  padding:.8rem 1.6rem; font-weight:600; letter-spacing:.01em;
+  transition:background .2s, transform .15s;
+}
+.btn:hover{background:#9a2e55}
+.btn:active{transform:scale(.98)}
+:focus-visible{outline:3px solid var(--vela); outline-offset:2px}
+.tbar{height:5px; border-radius:5px; background:var(--tinta2); margin-bottom:1.2rem; overflow:hidden}
+.tbar i{display:block; height:100%; background:var(--pantalla); transition:width 1s linear, background .3s}
+.tbar.urge i{background:var(--alerta)}
+.nombre{
+  width:100%; margin:.4rem 0 1.2rem; padding:.7rem .9rem; font:inherit;
+  background:var(--noche); color:var(--hueso); border:1px solid #3a2d4a; border-radius:10px;
+}
+.tag{
+  display:inline-block; padding:.15rem .7rem; border-radius:20px; font-size:.85rem; font-weight:600; margin-bottom:.8rem;
+}
+.tag.ok{background:#1f4d38; color:#9dffcb}
+.tag.mid{background:#5a4a1c; color:#ffe08f}
+.tag.bad{background:#5c1f2a; color:#ffb3bd}
+.cambios{display:flex; flex-wrap:wrap; gap:.6rem; margin:.4rem 0 1rem; font-size:.92rem; color:var(--niebla)}
+.cambios span{background:var(--noche); border-radius:8px; padding:.15rem .6rem}
+.leccion{
+  background:#241a2e; border:1px dashed var(--vela); border-radius:10px;
+  padding:.9rem 1rem; margin:1rem 0; font-size:.98rem;
+}
+.leccion strong{color:var(--vela)}
+.ideal{font-size:.95rem; color:var(--niebla); margin-bottom:.8rem}
+.resumen{list-style:none; margin:1rem 0}
+.resumen li{padding:.5rem 0; border-bottom:1px solid var(--tinta2); display:flex; gap:.7rem; align-items:flex-start; font-size:.95rem}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:.7rem; margin:1rem 0}
+.stat{background:var(--noche); border-radius:10px; padding:.7rem; text-align:center}
+.stat b{display:block; font-size:1.5rem; color:var(--vela)}
+.parpadeo{animation:parpadeo 3.2s infinite}
+@keyframes parpadeo{
+  0%,88%,100%{opacity:1} 90%{opacity:.35} 92%{opacity:1} 95%{opacity:.5} 97%{opacity:1}
+}
+@media (prefers-reduced-motion:reduce){
+  .parpadeo{animation:none}
+  *{transition:none !important}
+}
+@media (max-width:520px){
+  .meters{grid-template-columns:1fr}
+  .card{padding:1.2rem 1rem}
+}
+
+/* EXPERIENCIA DE TERROR INTERACTIVA */
+:root{--brillo:#e7a4c3;--sombra:#09050d}
+body{overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.14;background-image:radial-gradient(#fff 0.7px,transparent 1px);background-size:29px 29px;animation:polvo 19s linear infinite}
+@keyframes polvo{to{background-position:100px 180px}}
+.card{position:relative;overflow:hidden;animation:aparecer .55s ease both}
+@keyframes aparecer{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.card::before{content:"";position:absolute;top:0;left:-100%;height:2px;width:100%;background:linear-gradient(90deg,transparent,var(--rosa),transparent);animation:escanear 9s infinite}
+@keyframes escanear{to{left:130%}}
+.opt{position:relative;min-height:54px}
+.opt:hover{box-shadow:0 0 18px #e08aa326;transform:translateX(3px)}
+.btn{box-shadow:0 7px 24px #7a23424d}
+.btn:hover{transform:translateY(-2px)}
+#ghost{position:fixed;z-index:7;pointer-events:none;font-size:4rem;filter:drop-shadow(0 0 25px #ffccd9);opacity:0;transition:opacity .2s;transform:translate(-50%,-50%)}
+#ghost.visible{opacity:.85;animation:fantasma .9s ease-in-out infinite alternate}
+@keyframes fantasma{to{transform:translate(-50%,-65%) rotate(8deg)}}
+#flash{position:fixed;inset:0;z-index:20;background:#fff;opacity:0;pointer-events:none}
+#flash.blink{animation:flash .5s ease-out}
+@keyframes flash{0%{opacity:.8}100%{opacity:0}}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(40px);background:#24152f;border:1px solid var(--rosa);padding:12px 20px;border-radius:12px;z-index:30;opacity:0;transition:.3s;max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#extras{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;margin:.5rem auto;max-width:760px;padding:0 1rem}
+.mini{background:#291d36;border:1px solid #67415e;border-radius:9px;padding:.4rem .7rem;color:var(--hueso);font-size:.82rem}
+.mini:hover{background:#54304c}
+#progressOuter{max-width:760px;margin:.5rem auto;padding:0 1.2rem}
+#progressOuter .bar{height:6px;background:#302339;border-radius:10px;overflow:hidden}
+#progressFill{height:100%;width:0;background:linear-gradient(90deg,#a53a65,#f3c97a);transition:width .5s}
+#progressText{color:var(--niebla);font-size:.8rem;text-align:right}
+#inventory{display:none;max-width:760px;margin:0 auto;padding:.5rem 1.2rem;color:var(--vela);font-size:.88rem}
+#inventory.show{display:block}
+#inventory span{display:inline-block;background:#2c2039;border-radius:10px;padding:.2rem .55rem;margin:.2rem}
+#scareModal{position:fixed;inset:0;background:#08050ce8;z-index:40;display:none;align-items:center;justify-content:center;padding:1rem}
+#scareModal.show{display:flex}
+#scareModal .inside{max-width:460px;background:#211329;border:2px solid #c04b74;padding:2rem;text-align:center;border-radius:18px;box-shadow:0 0 80px #a12c5940}
+#scareModal .face{font-size:5rem;animation:temblar .25s infinite alternate}
+@keyframes temblar{to{transform:rotate(5deg) scale(1.06)}}
+#scareModal h2{color:var(--vela)}
+#scareModal p{margin:1rem 0}
+@media(max-width:520px){#extras{gap:.3rem}.mini{font-size:.74rem}header.top{flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){body::before,.card::before,#ghost.visible,#scareModal .face{animation:none}}
+</style>
+</head>
+<body>
+<div class="vignette" id="vignette"></div>
+
+<header class="top">
+  <div class="brand">🕯 Piso 13</div>
+  <div class="hud">
+    <span>⭐ <b id="score">0</b></span>
+    <span>⏱ <b id="clock">00:00</b></span>
+  </div>
+</header>
+
+<div class="meters" id="meters" hidden>
+  <div class="meter">♥ Conexión con Mateo
+    <div class="bar"><i id="barAmor" style="width:30%"></i></div>
+  </div>
+  <div class="meter">🕯 Calma
+    <div class="bar"><i id="barCalma" style="width:70%"></i></div>
+  </div>
+</div>
+
+<div id="extras"><button class="mini" id="soundToggle" type="button">🔇 Sonido: apagado</button><button class="mini" id="hintButton" type="button">🔮 Pista (-20 ⭐)</button><button class="mini" id="eventButton" type="button">🎲 Evento misterioso</button><button class="mini" id="inventoryButton" type="button">🗝 Inventario</button></div><div id="progressOuter"><div id="progressText">Tu aventura aún no empieza</div><div class="bar"><div id="progressFill"></div></div></div><div id="inventory"></div><div id="ghost" aria-hidden="true">👻</div><div id="flash" aria-hidden="true"></div><div id="toast" role="status" aria-live="polite"></div><div id="scareModal" role="dialog" aria-modal="true" aria-label="Encuentro sobrenatural"><div class="inside"><div class="face">👁️</div><h2>¡ALGUIEN TE OBSERVA!</h2><p id="scareText"></p><button class="btn" id="scareClose">Seguir con valentía</button></div></div>
+<main id="stage" aria-live="polite"></main>
+
+<script>
+/* =========================================================
+   DATOS DEL JUEGO
+   Para cambiar la historia, edita el arreglo ESCENAS.
+   tipo: "ok" (mejor decisión), "mid" (aceptable), "bad" (riesgosa)
+   amor / calma: cambios en los medidores. {n} = nombre de la jugadora/jugador.
+   ========================================================= */
+const ESCENAS = [
+{
+  titulo:"Una vacante en el piso 13",
+  lugar:"Sala de reuniones, 4:45 p. m.",
+  texto:[
+    ["nar","Es tu primer día como analista de Recursos Humanos de TicoSoft. Te asignaron al equipo de pruebas de software (QA): tres renuncias en seis meses y un piso entero que nadie quiere pisar después de las seis."],
+    ["dialogo","Mateo Salazar, líder de QA, te recibe con ojeras y una taza de café frío. «Necesito otro tester, {n}. El último duró once semanas. Dijo que el piso hablaba.»"],
+    ["nar","Te entrega una hoja en blanco. Tú debes definir el perfil de la vacante."]
+  ],
+  pregunta:"¿Cómo armas el perfil del puesto?",
+  opciones:[
+    {txt:"«Diez años de experiencia, dominio de doce herramientas, disponibilidad 24/7 y buen humor.»", tipo:"bad", amor:-5, calma:-5,
+     res:"Publicas la vacante. Pasan tres semanas sin una sola aplicación seria. Mateo te mira con una sonrisa cansada: «Creo que estamos buscando un fantasma.» Qué ironía."},
+    {txt:"Defines competencias clave (pensamiento analítico, comunicación, curiosidad), separas lo imprescindible de lo que se puede aprender y fijas un horario claro.", tipo:"ok", amor:10, calma:5,
+     res:"Mateo lee la hoja dos veces. «Esto es justo lo que necesito y no sabía cómo pedirlo.» Por primera vez en el día, sonríe de verdad. Llegan quince candidaturas en la primera semana."},
+    {txt:"Publicas la vacante solo entre los referidos del equipo actual para ir más rápido.", tipo:"mid", amor:0, calma:0,
+     res:"Llegan tres candidaturas en dos días, pero todas se parecen demasiado entre sí. Es rápido, aunque el equipo sigue sin diversidad de perfiles ni de ideas."}
+  ],
+  leccion:"Un perfil por competencias atrae más talento y reduce sesgos. Pedir de todo, o abrir la vacante solo a referidos, limita el reclutamiento. Separa lo imprescindible de lo que se aprende en el puesto."
+},
+{
+  titulo:"La entrevista de las seis",
+  lugar:"Oficina 13-B, 6:10 p. m.",
+  texto:[
+    ["nar","Daniela Mora, la mejor candidata, espera sentada con las manos entrelazadas. Mateo te cede la palabra y se queda en una esquina, observando."],
+    ["nar","Afuera ya oscureció. Las luces del pasillo tiemblan un segundo y vuelven."],
+    ["dialogo","Daniela susurra: «Perdón, ¿ese escritorio del fondo está libre? Alguien dejó una taza… y todavía está caliente.»"],
+    ["nar","Mateo traga saliva. Nadie se ha sentado ahí desde que Ana Quesada se fue."]
+  ],
+  pregunta:"Tienes que hacerle una pregunta clave. ¿Cuál eliges?",
+  opciones:[
+    {txt:"«Cuéntame de una vez en que encontraste un error grave: qué situación era, qué hiciste y qué resultado tuvo.»", tipo:"ok", amor:8, calma:5,
+     res:"Daniela respira y cuenta cómo detuvo un lanzamiento por un fallo en pagos. Con ejemplos reales puedes evaluar su forma de actuar, no solo lo que dice. Mateo asiente: ya la quiere en su equipo."},
+    {txt:"«¿Dónde te ves en cinco años y cuál es tu mayor defecto?»", tipo:"mid", amor:0, calma:0,
+     res:"Daniela da una respuesta ensayada y perfecta, de manual. Suena bien, pero sales sin saber cómo trabaja de verdad."},
+    {txt:"«¿Piensas casarte o tener hijos pronto? Es para planificar al equipo.»", tipo:"bad", amor:-10, calma:-10,
+     res:"Daniela palidece. Las luces se apagan de golpe y alguien, en la oscuridad, golpea un teclado. Cuando regresan, Mateo te mira muy serio: «Eso no se pregunta nunca, {n}.»"}
+  ],
+  leccion:"Las entrevistas conductuales (método STAR: situación, tarea, acción, resultado) predicen mejor el desempeño que las preguntas genéricas. Preguntar por estado civil, embarazo o hijos es discriminatorio y puede ser ilegal."
+},
+{
+  titulo:"Primera semana",
+  lugar:"Piso 13, lunes 8:00 a. m. y martes 11:07 p. m.",
+  texto:[
+    ["nar","Daniela aceptó la oferta y hoy empieza. Está emocionada, y también un poco asustada por la taza caliente."],
+    ["dialogo","Mateo se acerca a tu escritorio: «Tú diseñas su bienvenida, {n}. El último tester se fue porque nadie le explicó nada.»"],
+    ["nar","El martes en la noche, mientras revisas pendientes, el monitor del laboratorio de pruebas muestra algo:"]
+  ],
+  log:[
+    "[23:07:12] SESION INICIADA: usuario ana.quesada",
+    "[23:07:13] Equipo: QA-LAB-13",
+    "<span class='rojo'>[23:07:14] ADVERTENCIA: usuario dado de baja hace 8 meses</span>"
+  ],
+  pregunta:"¿Cómo organizas el onboarding de Daniela?",
+  opciones:[
+    {txt:"Le das la laptop y le dices: «Cualquier duda, me preguntas.»", tipo:"bad", amor:-5, calma:-8,
+     res:"Daniela pasa tres días sin accesos, sin saber a quién preguntar y viendo cómo su cursor se mueve solo. El jueves ya revisa ofertas en otras empresas."},
+    {txt:"Plan de 30-60-90 días, accesos listos desde el día uno, mentor asignado y presentación al equipo.", tipo:"ok", amor:8, calma:6,
+     res:"Daniela llega y todo está listo: accesos, un compañero guía (Luis) y metas claras. Se siente esperada y segura, incluso cuando el monitor parpadea."},
+    {txt:"Una charla de ocho horas sobre políticas, y que el equipo se conozca después.", tipo:"mid", amor:0, calma:-2,
+     res:"Daniela sabe todas las normas, pero no conoce a nadie ni ha tocado un solo caso de prueba. A medio día ya está agotada."}
+  ],
+  leccion:"Un onboarding estructurado (accesos, mentor, objetivos 30-60-90 y presentación al equipo) reduce la rotación temprana y acelera el aprendizaje. Muchas renuncias ocurren en los primeros meses por falta de integración."
+},
+{
+  titulo:"Noche de lanzamiento",
+  lugar:"Piso 13, 1:40 a. m.",
+  texto:[
+    ["nar","Es la noche del lanzamiento. El equipo lleva diecinueve horas despierto. Mateo ya no ve las pantallas: solo las atraviesa con la mirada."],
+    ["dialogo","«Una prueba más y terminamos», murmura. Se le cae el café sobre el teclado y ni se da cuenta."],
+    ["nar","En la pantalla grande del laboratorio aparece el reporte de ejecución:"]
+  ],
+  log:[
+    "Pruebas ejecutadas: 1203 / 1204",
+    "Pruebas exitosas : 1203",
+    "<span class='rojo'>Pendiente: caso #1204 (ejecutor: ana.quesada)</span>"
+  ],
+  pregunta:"El equipo está al límite. ¿Qué haces?",
+  opciones:[
+    {txt:"Rotas turnos, pides a gerencia recortar el alcance o mover la fecha y mandas a descansar a quienes pasaron de 12 horas.", tipo:"ok", amor:12, calma:6,
+     res:"Gerencia protesta, pero acepta mover una función secundaria. Mateo se queda dormido sobre su escritorio, y por primera vez en meses nadie se desmaya en el piso 13. Esa noche te cubre con su abrigo."},
+    {txt:"Apruebas horas extra pagadas y pizza para todos, sin cambiar nada más.", tipo:"mid", amor:2, calma:-3,
+     res:"Las horas extra se pagan y la pizza llega, pero la carga sigue igual. A las 3 a. m., Rebeca sale llorando al pasillo. El dinero compensa, pero no repara el cansancio."},
+    {txt:"«Nadie se va hasta que termine el lanzamiento.»", tipo:"bad", amor:-15, calma:-15,
+     res:"El ambiente se vuelve pesado. Alguien deja de escribir y se queda mirando una pantalla en blanco. Mateo te mira con una mezcla de dolor y decepción: «Así fue como perdimos a Ana.»"}
+  ],
+  leccion:"El burnout se previene con carga de trabajo razonable, descansos y planificación realista. Las horas extra tienen límites legales y deben pagarse con recargo, pero pagarlas no sustituye cuidar la salud del equipo."
+},
+{
+  titulo:"El expediente sin cerrar",
+  lugar:"Archivo de Recursos Humanos, 2:30 a. m.",
+  texto:[
+    ["nar","Bajas al archivo porque necesitas un contrato. En el estante más oscuro encuentras una carpeta con una etiqueta torcida: «Quesada, Ana. QA. Renuncia pendiente».",],
+    ["nar","Dentro hay una carta de renuncia sin firmar, una entrevista de salida que nunca se hizo y una nota con su letra, apretada y temblorosa: «Nadie lee mis reportes.»"],
+    ["nar","Detrás de ti, el tubo de luz parpadea en un ritmo que no es casual."]
+  ],
+  pregunta:"¿Qué haces con el expediente?",
+  opciones:[
+    {txt:"Lo cierras, lo resguardas, informas a tu jefatura de RR. HH. y propones hacer entrevistas de salida a todo el que se vaya.", tipo:"ok", amor:5, calma:6,
+     res:"Tu jefatura agradece que lo hayas reportado. Se acuerda revisar por qué no se cerró este proceso y empezar entrevistas de salida formales. Las luces dejan de parpadear."},
+    {txt:"Lo dejas tal cual y subes. No es tu problema.", tipo:"mid", amor:0, calma:-8,
+     res:"Subes por la escalera mientras la puerta del archivo se cierra sola. El problema sigue sin resolverse y tú lo sabes."},
+    {txt:"Le tomas fotos y se las mandas a Mateo para que «entienda lo que pasó».", tipo:"bad", amor:-12, calma:-12,
+     res:"Mateo lee la nota de Ana en el celular y se queda mudo. Compartir un expediente fuera del canal oficial rompió la confidencialidad, y su mirada cambia: ya no confía igual."}
+  ],
+  leccion:"Los expedientes son confidenciales: solo se consultan con un fin legítimo y por los canales formales. Las entrevistas de salida revelan por qué se va la gente y ayudan a corregir problemas antes de perder más talento."
+},
+{
+  titulo:"Manual contra automatización",
+  lugar:"Laboratorio de pruebas, 10:00 a. m.",
+  texto:[
+    ["nar","El sol por fin entra al piso 13. Pero hay gritos. Hugo, ingeniero de automatización, y Rebeca, tester de pruebas manuales y exploratorias, discuten frente a todo el equipo."],
+    ["dialogo","Hugo: «¡Mi robot ejecuta mil pruebas mientras tú abres una pantalla!» Rebeca: «¡Tu robot jamás encontraría lo que yo encuentro, porque no sabe dudar!»"],
+    ["nar","Las luces se apagan de golpe. Todo el mundo queda en silencio."]
+  ],
+  pregunta:"¿Cómo manejas el conflicto?",
+  opciones:[
+    {txt:"Hablas con cada persona por separado y luego medias: clarificas roles complementarios y ofreces capacitación en automatización para quien la quiera.", tipo:"ok", amor:8, calma:6,
+     res:"Hugo entiende que su automatización necesita el ojo humano de Rebeca; Rebeca, que la automatización le libera tiempo para explorar. Terminan armando juntos un plan de capacitación cruzada."},
+    {txt:"Les dices que se disculpen frente a todos y asunto cerrado.", tipo:"bad", amor:-6, calma:-8,
+     res:"Se disculpan con la mandíbula apretada. El conflicto no se resolvió, solo se enterró, y al día siguiente Rebeca deja de hablarle a Hugo y a ti."},
+    {txt:"«Son adultos, resuélvanlo ustedes.»", tipo:"mid", amor:-2, calma:-3,
+     res:"El problema se enfría un par de días, pero reaparece en el siguiente sprint. Mateo te mira: «Creí que Recursos Humanos servía para esto.»"}
+  ],
+  leccion:"En QA conviven roles complementarios (pruebas manuales, automatización, líder de QA, analista de calidad). Un conflicto se maneja con escucha individual, mediación y claridad de roles. La capacitación cruzada convierte la rivalidad en colaboración."
+},
+{
+  titulo:"Lo que Mateo no dijo",
+  lugar:"Azotea del edificio, 3:15 a. m.",
+  texto:[
+    ["nar","Subes a la azotea a respirar. San José brilla allá abajo. Mateo está ahí, apoyado en la baranda, con el abrigo que te prestó hace unas noches."],
+    ["dialogo","«Desde el primer día, {n}… me gustas. Sé que no debería decirlo. Tú trabajas con mi equipo. Pero si no lo digo esta noche, creo que el piso me lo va a sacar de otra forma.»"],
+    ["nar","Hay un silencio largo. El viento mueve la puerta de la escalera, que suena como si alguien más estuviera escuchando."]
+  ],
+  pregunta:"¿Qué le respondes?",
+  opciones:[
+    {txt:"Le dices que sientes lo mismo, pero que van a declarar la relación según la política de conflicto de interés y que dejarás de evaluar o gestionar a su equipo.", tipo:"ok", amor:25, calma:8,
+     res:"Mateo sonríe, aliviado y un poco asombrado. «Hagámoslo bien, entonces.» Mañana hablarás con tu jefatura. Por primera vez en meses, el piso 13 se siente silencioso en el mejor sentido."},
+    {txt:"Aceptas, pero lo mantienen en secreto para evitar chismes.", tipo:"bad", amor:10, calma:-12,
+     res:"Se besan bajo las estrellas. Dos semanas después alguien en el piso comenta que Mateo recibe un trato especial, y tú ya no puedes tener una opinión neutral sobre su equipo. El secreto se vuelve un nuevo fantasma."},
+    {txt:"Lo rechazas con frialdad: «Soy profesional.»", tipo:"mid", amor:-20, calma:-5,
+     res:"Mateo asiente, herido, y baja las escaleras en silencio. Quizá el camino correcto no era la frialdad, sino la transparencia."}
+  ],
+  leccion:"Una relación entre personas de la misma línea de trabajo genera conflicto de interés. Lo correcto es declararla, aplicar la política de la empresa y separar las decisiones de evaluación o ascenso. El secreto crea riesgos legales y de confianza."
+},
+{
+  titulo:"El monitor que mide demasiado",
+  lugar:"Sala de reuniones, evaluaciones semestrales",
+  texto:[
+    ["nar","Toca evaluar el desempeño del semestre. Gerencia propone un tablero simple: quien reporta más bugs, gana el bono."],
+    ["nar","Antes de decidir, abres el expediente digital de Ana. En la última evaluación, la pantalla se enciende sola:"]
+  ],
+  log:[
+    "Evaluación Ana Quesada, ciclo anterior",
+    "Bugs encontrados : 1203",
+    "<span class='rojo'>Reconocimiento recibido: 0</span>",
+    "<span class='rojo'>Retroalimentación: ninguna</span>"
+  ],
+  pregunta:"¿Cómo diseñas la evaluación del equipo de pruebas?",
+  opciones:[
+    {txt:"Evaluación 360 con varios criterios (calidad del reporte, colaboración, impacto), conversación de retroalimentación y plan de desarrollo.", tipo:"ok", amor:8, calma:6,
+     res:"Cada persona recibe retroalimentación específica y un plan de crecimiento. Daniela llora de gusto al leer que su reporte evitó un incidente en producción. Alguien deja una vela encendida en el escritorio del fondo."},
+    {txt:"Usas el tablero de gerencia: más bugs reportados, más bono.", tipo:"bad", amor:-8, calma:-10,
+     res:"En dos semanas los testers reportan fallos duplicados e irrelevantes solo para subir el número. Ana trabajó así, sin que nadie notara la calidad de su trabajo. La métrica premió el ruido."},
+    {txt:"La evaluación la hace solo el gerente, con su criterio.", tipo:"mid", amor:0, calma:-4,
+     res:"Es rápido, pero el equipo siente que la evaluación es arbitraria. Sin criterios claros ni retroalimentación, nadie sabe cómo mejorar."}
+  ],
+  leccion:"Evaluar a un tester solo por la cantidad de bugs genera incentivos perversos. Una buena evaluación usa varios criterios, varias fuentes (360) y una conversación de retroalimentación con plan de desarrollo."
+},
+{
+  titulo:"Ana",
+  lugar:"Piso 13, 11:59 p. m.",
+  texto:[
+    ["nar","Esa noche regresas por tus llaves. En el fondo, la silla gira lentamente. La taza ya no humea: está helada. Una figura se dibuja frente a la pantalla, con los dedos moviéndose sobre un teclado que no suena."],
+    ["dialogo","«Encontré mil doscientos tres fallos», dice Ana, sin voltear. «Nadie dijo gracias. Me quedé para terminar la prueba mil doscientos cuatro, y todavía estoy aquí.»"],
+    ["nar","Mateo aparece detrás de ti, pálido, pero sin soltarte la mano."]
+  ],
+  pregunta:"¿Qué le dices a Ana?",
+  opciones:[
+    {txt:"«Tu trabajo importó. Lo sentimos. Vamos a reconocerlo y a cambiar la forma en que cuidamos al equipo.»", tipo:"ok", amor:12, calma:12,
+     res:"Ana voltea por fin. Su rostro es el de alguien muy cansado. «Eso era todo lo que quería.» Su reflejo se desvanece de la pantalla y el cursor deja de moverse. Mateo respira por primera vez en meses."},
+    {txt:"Sales corriendo hacia el elevador.", tipo:"bad", amor:-10, calma:-25,
+     res:"Corres, pero el elevador se queda en el piso 13 con las puertas abiertas. Las pantallas se encienden una por una, mostrando el mismo reporte: «1203 / 1204»."},
+    {txt:"«Podemos darte una compensación económica por lo que pasó.»", tipo:"mid", amor:0, calma:-8,
+     res:"Ana ladea la cabeza. «El dinero no me hace falta.» La figura se vuelve más borrosa, pero no se va. Necesita algo más que un pago."}
+  ],
+  leccion:"El reconocimiento y la retroalimentación son motivadores tan importantes como el salario. Compensar económicamente no sustituye decir «gracias» y entender el impacto del trabajo de cada persona."
+},
+{
+  titulo:"Amanecer de lanzamiento",
+  lugar:"Sala de gerencia, 7:00 a. m.",
+  texto:[
+    ["nar","El lanzamiento salió bien. El sol entra por las ventanas del piso 13 por primera vez en meses. Gerencia te pide una propuesta para evitar que se repita lo ocurrido."],
+    ["dialogo","Mateo te aprieta la mano bajo la mesa. «Lo que propongas hoy decide si este piso vuelve a ser un buen lugar para trabajar, {n}.»"]
+  ],
+  pregunta:"¿Qué propuesta presentas?",
+  opciones:[
+    {txt:"Programa integral: onboarding estructurado, control de carga, rutas de carrera, evaluación 360, entrevistas de salida y reconocimiento periódico.", tipo:"ok", amor:12, calma:12,
+     res:"Gerencia aprueba el programa. Seis meses después, la rotación baja a la mitad y nadie vuelve a oír teclados en la oscuridad. La vela del escritorio del fondo sigue encendida cada viernes."},
+    {txt:"Un bono de retención para que nadie renuncie este año.", tipo:"mid", amor:2, calma:-3,
+     res:"El bono ayuda un tiempo, pero las causas siguen intactas. Un año después, el equipo vuelve a quejarse y a mirar el escritorio del fondo."},
+    {txt:"Contratar más gente y despedir a quienes rindan menos.", tipo:"bad", amor:-10, calma:-12,
+     res:"El miedo se propaga entre las filas. Los mejores empiezan a buscar trabajo y las pantallas del piso 13 vuelven a parpadear de noche."}
+  ],
+  leccion:"La retención se construye con un sistema coherente: reclutamiento claro, onboarding, carga sana, reconocimiento, desarrollo de carrera y escucha. Un solo bono o la amenaza del despido no resuelven la raíz del problema."
+},
+
+{
+  "titulo": "El tablero de los roles",
+  "lugar": "Laboratorio 13, 8:13 p. m.",
+  "texto": [
+    [
+      "nar",
+      "Una silueta escribe QA, DEV, PO y SDET en el vidrio empañado. Cada rol debe encontrar su lugar."
+    ],
+    [
+      "dialogo",
+      "Mateo baja la voz: «{n}, la decisión que tomes ahora cambiará lo que ocurra en este piso»."
+    ],
+    [
+      "nar",
+      "Las luces parpadean. Una figura espera tu respuesta detrás del cristal."
+    ]
+  ],
+  "pregunta": "¿Quién suele definir prioridades de negocio y criterios de aceptación?",
+  "opciones": [
+    {
+      "txt": "Product Owner o representante del negocio",
+      "tipo": "ok",
+      "amor": 6,
+      "calma": 7,
+      "res": "La puerta se abre y el equipo recupera la confianza. Tu decisión protege a las personas y mejora la calidad."
+    },
+    {
+      "txt": "Solo el tester manual",
+      "tipo": "mid",
+      "amor": -1,
+      "calma": -3,
+      "res": "La sombra retrocede un poco, pero el problema no está resuelto. Hace falta un enfoque más completo."
+    },
+    {
+      "txt": "El personal de soporte sin consultar al negocio",
+      "tipo": "bad",
+      "amor": -7,
+      "calma": -10,
+      "res": "Una alarma retumba en el laboratorio. La decisión deja riesgos y el equipo se inquieta."
+    }
+  ],
+  "leccion": "El Product Owner ayuda a priorizar necesidades y aclarar criterios de aceptación."
+},
+{
+  "titulo": "La prueba que nadie quería",
+  "lugar": "Sala de planificación, 9:01 p. m.",
+  "texto": [
+    [
+      "nar",
+      "Un caso de prueba aparece marcado como BLOQUEADO. El equipo se culpa entre sí."
+    ],
+    [
+      "dialogo",
+      "Mateo baja la voz: «{n}, la decisión que tomes ahora cambiará lo que ocurra en este piso»."
+    ],
+    [
+      "nar",
+      "Las luces parpadean. Una figura espera tu respuesta detrás del cristal."
+    ]
+  ],
+  "pregunta": "¿Quién debe colaborar para resolver un bloqueo en las pruebas?",
+  "opciones": [
+    {
+      "txt": "QA, desarrollo y responsables del entorno según la causa",
+      "tipo": "ok",
+      "amor": 6,
+      "calma": 7,
+      "res": "La puerta se abre y el equipo recupera la confianza. Tu decisión protege a las personas y mejora la calidad."
+    },
+    {
+      "txt": "Únicamente Recursos Humanos",
+      "tipo": "mid",
+      "amor": -1,
+      "calma": -3,
+      "res": "La sombra retrocede un poco, pero el problema no está resuelto. Hace falta un enfoque más completo."
+    },
+    {
+      "txt": "Solo quien redactó el caso, sin pedir ayuda",
+      "tipo": "bad",
+      "amor": -7,
+      "calma": -10,
+      "res": "Una alarma retumba en el laboratorio. La decisión deja riesgos y el equipo se inquieta."
+    }
+  ],
+  "leccion": "Resolver bloqueos requiere coordinación y responsabilidades claras."
+},
+{
+  "titulo": "El espejo de los sesgos",
+  "lugar": "Oficina de entrevistas, 6:66 p. m.",
+  "texto": [
+    [
+      "nar",
+      "En el espejo aparecen currículums sin rostro. Uno tiene un título prestigioso; otro, excelentes ejercicios prácticos."
+    ],
+    [
+      "dialogo",
+      "Mateo baja la voz: «{n}, la decisión que tomes ahora cambiará lo que ocurra en este piso»."
+    ],
+    [
+      "nar",
+      "Las luces parpadean. Una figura espera tu respuesta detrás del cristal."
+    ]
+  ],
+  "pregunta": "¿Qué reduce los sesgos en selección de testers?",
+  "opciones": [
+    {
+      "txt": "Rúbricas claras y ejercicios relacionados con el puesto",
+      "tipo": "ok",
+      "amor": 6,
+      "calma": 7,
+      "res": "La puerta se abre y el equipo recupera la confianza. Tu decisión protege a las personas y mejora la calidad."
+    },
+    {
+      "txt": "Elegir a quien se parezca más al equipo",
+      "tipo": "mid",
+      "amor": -1,
+      "calma": -3,
+      "res": "La sombra retrocede un poco, pero el problema no está resuelto. Hace falta un enfoque más completo."
+    },
+    {
+      "txt": "Contratar por intuición sin criterios",
+      "tipo": "bad",
+      "amor": -7,
+      "calma": -10,
+      "res": "Una alarma retumba en el laboratorio. La decisión deja riesgos y el equipo se inquieta."
+    }
+  ],
+  "leccion": "Las evaluaciones estructuradas y relevantes favorecen decisiones consistentes."
+},
+{
+  "titulo": "La escalera de habilidades",
+  "lugar": "Escalera de emergencia, medianoche",
+  "texto": [
+    [
+      "nar",
+      "Cada escalón tiene una habilidad: curiosidad, SQL, comunicación, automatización y análisis."
+    ],
+    [
+      "dialogo",
+      "Mateo baja la voz: «{n}, la decisión que tomes ahora cambiará lo que ocurra en este piso»."
+    ],
+    [
+      "nar",
+      "Las luces parpadean. Una figura espera tu respuesta detrás del cristal."
+    ]
+  ],
+  "pregunta": "¿Qué combinación es más útil para un equipo de QA?",
+  "opciones": [
+    {
+      "txt": "Habilidades técnicas y blandas complementarias",
+      "tipo": "ok",
+      "amor": 6,
+      "calma": 7,
+      "res": "La puerta se abre y el equipo recupera la confianza. Tu decisión protege a las personas y mejora la calidad."
+    },
+    {
+      "txt": "Solo programación avanzada",
+      "tipo": "mid",
+      "amor": -1,
+      "calma": -3,
+      "res": "La sombra retrocede un poco, pero el problema no está resuelto. Hace falta un enfoque más completo."
+    },
+    {
+      "txt": "Solo velocidad para ejecutar casos",
+      "tipo": "bad",
+      "amor": -7,
+      "calma": -10,
+      "res": "Una alarma retumba en el laboratorio. La decisión deja riesgos y el equipo se inquieta."
+    }
+  ],
+  "leccion": "El testing combina análisis técnico, comunicación, curiosidad y colaboración."
+},
+{
+  "titulo": "El fantasma de los defectos",
+  "lugar": "Servidor de incidencias, 1:13 a. m.",
+  "texto": [
+    [
+      "nar",
+      "Una incidencia crítica vuelve a abrirse por tercera vez. Su descripción solo dice «no sirve»."
+    ],
+    [
+      "dialogo",
+      "Mateo baja la voz: «{n}, la decisión que tomes ahora cambiará lo que ocurra en este piso»."
+    ],
+    [
+      "nar",
+      "Las luces parpadean. Una figura espera tu respuesta detrás del cristal."
+    ]
+  ],
+  "pregunta": "¿Qué debe incluir un buen reporte de defecto?",
+  "opciones": [
+    {
+      "txt": "Pasos para reproducir, resultado esperado y real, evidencia y entorno",
+      "tipo": "ok",
+      "amor": 6,
+      "calma": 7,
+      "res": "La puerta se abre y el equipo recupera la confianza. Tu decisión protege a las personas y mejora la calidad."
+    },
+    {
+      "txt": "Una queja general sin detalles",
+      "tipo": "mid",
+      "amor": -1,
+      "calma": -3,
+      "res": "La sombra retrocede un poco, pero el problema no está resuelto. Hace falta un enfoque más completo."
+    },
+    {
+      "txt": "El nombre de la persona a quien culpar",
+      "tipo": "bad",
+      "amor": -7,
+      "calma": -10,
+      "res": "Una alarma retumba en el laboratorio. La decisión deja riesgos y el equipo se inquieta."
+    }
+  ],
+  "leccion": "Un reporte reproducible ayuda al equipo a investigar y corregir fallos."
+},
+{
+  "titulo": "El juicio del tester",
+  "lugar": "Sala de juntas, 2:00 a. m.",
+  "texto": [
+    [
+      "nar",
+      "Un gerente señala a Daniela: «Si hay bugs, es culpa tuya». Las paredes crujen."
+    ],
+    [
+      "dialogo",
+      "Mateo baja la voz: «{n}, la decisión que tomes ahora cambiará lo que ocurra en este piso»."
+    ],
+    [
+      "nar",
+      "Las luces parpadean. Una figura espera tu respuesta detrás del cristal."
+    ]
+  ],
+  "pregunta": "¿Cuál es la responsabilidad real de QA?",
+  "opciones": [
+    {
+      "txt": "Aportar información sobre calidad y riesgos junto con todo el equipo",
+      "tipo": "ok",
+      "amor": 6,
+      "calma": 7,
+      "res": "La puerta se abre y el equipo recupera la confianza. Tu decisión protege a las personas y mejora la calidad."
+    },
+    {
+      "txt": "Garantizar por sí solo software perfecto",
+      "tipo": "mid",
+      "amor": -1,
+      "calma": -3,
+      "res": "La sombra retrocede un poco, pero el problema no está resuelto. Hace falta un enfoque más completo."
+    },
+    {
+      "txt": "Aprobar todo sin cuestionar",
+      "tipo": "bad",
+      "amor": -7,
+      "calma": -10,
+      "res": "Una alarma retumba en el laboratorio. La decisión deja riesgos y el equipo se inquieta."
+    }
+  ],
+  "leccion": "La calidad es una responsabilidad compartida; QA hace visibles los riesgos."
+},
+{
+  "titulo": "El pacto de la retrospectiva",
+  "lugar": "Sala ágil, viernes 5:00 p. m.",
+  "texto": [
+    [
+      "nar",
+      "Las notas adhesivas se mueven solas. Una dice «nadie escucha»."
+    ],
+    [
+      "dialogo",
+      "Mateo baja la voz: «{n}, la decisión que tomes ahora cambiará lo que ocurra en este piso»."
+    ],
+    [
+      "nar",
+      "Las luces parpadean. Una figura espera tu respuesta detrás del cristal."
+    ]
+  ],
+  "pregunta": "¿Cómo debe realizarse una retrospectiva útil?",
+  "opciones": [
+    {
+      "txt": "Con seguridad psicológica, acciones concretas y seguimiento",
+      "tipo": "ok",
+      "amor": 6,
+      "calma": 7,
+      "res": "La puerta se abre y el equipo recupera la confianza. Tu decisión protege a las personas y mejora la calidad."
+    },
+    {
+      "txt": "Buscando culpables públicamente",
+      "tipo": "mid",
+      "amor": -1,
+      "calma": -3,
+      "res": "La sombra retrocede un poco, pero el problema no está resuelto. Hace falta un enfoque más completo."
+    },
+    {
+      "txt": "Omitiendo los problemas para evitar conflictos",
+      "tipo": "bad",
+      "amor": -7,
+      "calma": -10,
+      "res": "Una alarma retumba en el laboratorio. La decisión deja riesgos y el equipo se inquieta."
+    }
+  ],
+  "leccion": "Las retrospectivas permiten mejorar procesos sin castigar a quien señala problemas."
+},
+{
+  "titulo": "La contraseña de la noche",
+  "lugar": "Pasillo de accesos, 11:11 p. m.",
+  "texto": [
+    [
+      "nar",
+      "Un monitor pide compartir la contraseña del administrador para probar más rápido."
+    ],
+    [
+      "dialogo",
+      "Mateo baja la voz: «{n}, la decisión que tomes ahora cambiará lo que ocurra en este piso»."
+    ],
+    [
+      "nar",
+      "Las luces parpadean. Una figura espera tu respuesta detrás del cristal."
+    ]
+  ],
+  "pregunta": "¿Qué práctica protege el acceso a entornos de prueba?",
+  "opciones": [
+    {
+      "txt": "Cuentas individuales, permisos mínimos y gestión segura de secretos",
+      "tipo": "ok",
+      "amor": 6,
+      "calma": 7,
+      "res": "La puerta se abre y el equipo recupera la confianza. Tu decisión protege a las personas y mejora la calidad."
+    },
+    {
+      "txt": "Compartir una contraseña por chat",
+      "tipo": "mid",
+      "amor": -1,
+      "calma": -3,
+      "res": "La sombra retrocede un poco, pero el problema no está resuelto. Hace falta un enfoque más completo."
+    },
+    {
+      "txt": "Desactivar auditorías y controles",
+      "tipo": "bad",
+      "amor": -7,
+      "calma": -10,
+      "res": "Una alarma retumba en el laboratorio. La decisión deja riesgos y el equipo se inquieta."
+    }
+  ],
+  "leccion": "Los accesos deben ser trazables y ajustados a cada responsabilidad."
+},
+{
+  "titulo": "El laboratorio inclusivo",
+  "lugar": "Sala de accesibilidad, 10:10 p. m.",
+  "texto": [
+    [
+      "nar",
+      "Una voz invisible pregunta quién probará el sitio con teclado y lector de pantalla."
+    ],
+    [
+      "dialogo",
+      "Mateo baja la voz: «{n}, la decisión que tomes ahora cambiará lo que ocurra en este piso»."
+    ],
+    [
+      "nar",
+      "Las luces parpadean. Una figura espera tu respuesta detrás del cristal."
+    ]
+  ],
+  "pregunta": "¿Qué fortalece las pruebas de accesibilidad?",
+  "opciones": [
+    {
+      "txt": "Incluir diversidad de perspectivas y herramientas de apoyo",
+      "tipo": "ok",
+      "amor": 6,
+      "calma": 7,
+      "res": "La puerta se abre y el equipo recupera la confianza. Tu decisión protege a las personas y mejora la calidad."
+    },
+    {
+      "txt": "Probar solo con mouse",
+      "tipo": "mid",
+      "amor": -1,
+      "calma": -3,
+      "res": "La sombra retrocede un poco, pero el problema no está resuelto. Hace falta un enfoque más completo."
+    },
+    {
+      "txt": "Suponer que todas las personas usan la interfaz igual",
+      "tipo": "bad",
+      "amor": -7,
+      "calma": -10,
+      "res": "Una alarma retumba en el laboratorio. La decisión deja riesgos y el equipo se inquieta."
+    }
+  ],
+  "leccion": "Un equipo sensible a distintas necesidades detecta barreras de uso."
+},
+{
+  "titulo": "La maldición del conocimiento",
+  "lugar": "Biblioteca de QA, 3:33 a. m.",
+  "texto": [
+    [
+      "nar",
+      "Los manuales desaparecen cada vez que alguien renuncia."
+    ],
+    [
+      "dialogo",
+      "Mateo baja la voz: «{n}, la decisión que tomes ahora cambiará lo que ocurra en este piso»."
+    ],
+    [
+      "nar",
+      "Las luces parpadean. Una figura espera tu respuesta detrás del cristal."
+    ]
+  ],
+  "pregunta": "¿Cómo evitar que el conocimiento dependa de una sola persona?",
+  "opciones": [
+    {
+      "txt": "Documentación útil, sesiones compartidas y mentoría",
+      "tipo": "ok",
+      "amor": 6,
+      "calma": 7,
+      "res": "La puerta se abre y el equipo recupera la confianza. Tu decisión protege a las personas y mejora la calidad."
+    },
+    {
+      "txt": "Guardar procedimientos solo en mensajes privados",
+      "tipo": "mid",
+      "amor": -1,
+      "calma": -3,
+      "res": "La sombra retrocede un poco, pero el problema no está resuelto. Hace falta un enfoque más completo."
+    },
+    {
+      "txt": "Evitar rotación de tareas para siempre",
+      "tipo": "bad",
+      "amor": -7,
+      "calma": -10,
+      "res": "Una alarma retumba en el laboratorio. La decisión deja riesgos y el equipo se inquieta."
+    }
+  ],
+  "leccion": "Compartir conocimiento mejora continuidad y reduce dependencia."
+},
+{
+  "titulo": "El reloj de la estimación",
+  "lugar": "Sala Scrum, 7:07 p. m.",
+  "texto": [
+    [
+      "nar",
+      "El reloj gira hacia atrás. La gerencia exige probar cien historias en una hora."
+    ],
+    [
+      "dialogo",
+      "Mateo baja la voz: «{n}, la decisión que tomes ahora cambiará lo que ocurra en este piso»."
+    ],
+    [
+      "nar",
+      "Las luces parpadean. Una figura espera tu respuesta detrás del cristal."
+    ]
+  ],
+  "pregunta": "¿Qué debería hacer el líder de pruebas?",
+  "opciones": [
+    {
+      "txt": "Comunicar riesgos, estimar con el equipo y negociar alcance",
+      "tipo": "ok",
+      "amor": 6,
+      "calma": 7,
+      "res": "La puerta se abre y el equipo recupera la confianza. Tu decisión protege a las personas y mejora la calidad."
+    },
+    {
+      "txt": "Prometer que todo estará probado",
+      "tipo": "mid",
+      "amor": -1,
+      "calma": -3,
+      "res": "La sombra retrocede un poco, pero el problema no está resuelto. Hace falta un enfoque más completo."
+    },
+    {
+      "txt": "Ocultar pruebas pendientes",
+      "tipo": "bad",
+      "amor": -7,
+      "calma": -10,
+      "res": "Una alarma retumba en el laboratorio. La decisión deja riesgos y el equipo se inquieta."
+    }
+  ],
+  "leccion": "La planificación realista requiere visibilidad del riesgo y negociación."
+},
+{
+  "titulo": "La sombra de la automatización",
+  "lugar": "Laboratorio SDET, 12:12 a. m.",
+  "texto": [
+    [
+      "nar",
+      "Un robot asegura que reemplazará a todos los testers."
+    ],
+    [
+      "dialogo",
+      "Mateo baja la voz: «{n}, la decisión que tomes ahora cambiará lo que ocurra en este piso»."
+    ],
+    [
+      "nar",
+      "Las luces parpadean. Una figura espera tu respuesta detrás del cristal."
+    ]
+  ],
+  "pregunta": "¿Cuál es el aporte humano que sigue siendo clave?",
+  "opciones": [
+    {
+      "txt": "Exploración, criterio contextual y análisis de riesgos",
+      "tipo": "ok",
+      "amor": 6,
+      "calma": 7,
+      "res": "La puerta se abre y el equipo recupera la confianza. Tu decisión protege a las personas y mejora la calidad."
+    },
+    {
+      "txt": "Repetir manualmente todo sin estrategia",
+      "tipo": "mid",
+      "amor": -1,
+      "calma": -3,
+      "res": "La sombra retrocede un poco, pero el problema no está resuelto. Hace falta un enfoque más completo."
+    },
+    {
+      "txt": "Ignorar resultados automatizados",
+      "tipo": "bad",
+      "amor": -7,
+      "calma": -10,
+      "res": "Una alarma retumba en el laboratorio. La decisión deja riesgos y el equipo se inquieta."
+    }
+  ],
+  "leccion": "La automatización apoya, pero no sustituye el juicio humano."
+},
+{
+  "titulo": "El caso de la evidencia perdida",
+  "lugar": "Bóveda digital, 4:04 a. m.",
+  "texto": [
+    [
+      "nar",
+      "Un auditor pide pruebas de ejecución. Solo encuentra capturas sin fecha."
+    ],
+    [
+      "dialogo",
+      "Mateo baja la voz: «{n}, la decisión que tomes ahora cambiará lo que ocurra en este piso»."
+    ],
+    [
+      "nar",
+      "Las luces parpadean. Una figura espera tu respuesta detrás del cristal."
+    ]
+  ],
+  "pregunta": "¿Qué permite trazabilidad en testing?",
+  "opciones": [
+    {
+      "txt": "Vincular requisitos, casos, ejecuciones, defectos y evidencias",
+      "tipo": "ok",
+      "amor": 6,
+      "calma": 7,
+      "res": "La puerta se abre y el equipo recupera la confianza. Tu decisión protege a las personas y mejora la calidad."
+    },
+    {
+      "txt": "Guardar capturas sin contexto",
+      "tipo": "mid",
+      "amor": -1,
+      "calma": -3,
+      "res": "La sombra retrocede un poco, pero el problema no está resuelto. Hace falta un enfoque más completo."
+    },
+    {
+      "txt": "Borrar los resultados fallidos",
+      "tipo": "bad",
+      "amor": -7,
+      "calma": -10,
+      "res": "Una alarma retumba en el laboratorio. La decisión deja riesgos y el equipo se inquieta."
+    }
+  ],
+  "leccion": "La trazabilidad permite explicar qué se verificó y con qué resultados."
+},
+{
+  "titulo": "La guardia imposible",
+  "lugar": "Centro de operaciones, domingo 2:22 a. m.",
+  "texto": [
+    [
+      "nar",
+      "Todos reciben alertas aunque están de vacaciones."
+    ],
+    [
+      "dialogo",
+      "Mateo baja la voz: «{n}, la decisión que tomes ahora cambiará lo que ocurra en este piso»."
+    ],
+    [
+      "nar",
+      "Las luces parpadean. Una figura espera tu respuesta detrás del cristal."
+    ]
+  ],
+  "pregunta": "¿Qué medida mejora el bienestar del equipo?",
+  "opciones": [
+    {
+      "txt": "Guardias rotativas planificadas y descansos reales",
+      "tipo": "ok",
+      "amor": 6,
+      "calma": 7,
+      "res": "La puerta se abre y el equipo recupera la confianza. Tu decisión protege a las personas y mejora la calidad."
+    },
+    {
+      "txt": "Exigir disponibilidad permanente",
+      "tipo": "mid",
+      "amor": -1,
+      "calma": -3,
+      "res": "La sombra retrocede un poco, pero el problema no está resuelto. Hace falta un enfoque más completo."
+    },
+    {
+      "txt": "Premiar solo a quien duerme menos",
+      "tipo": "bad",
+      "amor": -7,
+      "calma": -10,
+      "res": "Una alarma retumba en el laboratorio. La decisión deja riesgos y el equipo se inquieta."
+    }
+  ],
+  "leccion": "La distribución justa de guardias reduce fatiga y errores."
+},
+{
+  "titulo": "La última entrevista",
+  "lugar": "Ascensor del piso 13, 5:55 a. m.",
+  "texto": [
+    [
+      "nar",
+      "Ana te deja una pregunta final antes de desaparecer."
+    ],
+    [
+      "dialogo",
+      "Mateo baja la voz: «{n}, la decisión que tomes ahora cambiará lo que ocurra en este piso»."
+    ],
+    [
+      "nar",
+      "Las luces parpadean. Una figura espera tu respuesta detrás del cristal."
+    ]
+  ],
+  "pregunta": "¿Qué debería medir un plan de mejora del equipo de pruebas?",
+  "opciones": [
+    {
+      "txt": "Calidad del trabajo, aprendizaje, colaboración y bienestar",
+      "tipo": "ok",
+      "amor": 6,
+      "calma": 7,
+      "res": "La puerta se abre y el equipo recupera la confianza. Tu decisión protege a las personas y mejora la calidad."
+    },
+    {
+      "txt": "Únicamente cantidad de bugs",
+      "tipo": "mid",
+      "amor": -1,
+      "calma": -3,
+      "res": "La sombra retrocede un poco, pero el problema no está resuelto. Hace falta un enfoque más completo."
+    },
+    {
+      "txt": "Solo horas conectadas",
+      "tipo": "bad",
+      "amor": -7,
+      "calma": -10,
+      "res": "Una alarma retumba en el laboratorio. La decisión deja riesgos y el equipo se inquieta."
+    }
+  ],
+  "leccion": "Los indicadores equilibrados ayudan a mejorar sin fomentar conductas dañinas."
+}
+];
+
+const FINALES = {
+  oscuridad:{titulo:"Te quedaste en el piso 13", texto:"Las luces se apagan y no vuelven. Esa noche, en el laboratorio de pruebas, aparece una nueva sesión abierta a tu nombre. Con la calma agotada, el piso 13 ya no te dejó salir."},
+  mejor:{titulo:"Amanecer en el piso 13", texto:"Tomaste decisiones sólidas y humanas. Ana descansó, el equipo respira y Mateo y tú, con todo declarado y en regla, caminan juntos hacia el elevador. Ya nadie teme la noche en el piso de pruebas."},
+  amor:{titulo:"Un amor con luces parpadeando", texto:"El corazón ganó, pero los procesos de Recursos Humanos quedaron a medias. Mateo y tú siguen juntos, pero a veces, de madrugada, algo en el laboratorio sigue ejecutando pruebas que nadie programó."},
+  pro:{titulo:"Profesional impecable, corazón en pausa", texto:"Dejaste un equipo mejor organizado, pero la distancia con Mateo creció. En el fondo del piso 13, una taza de café humea cada noche, como si alguien siguiera esperando que alguien más se acerque."},
+  malo:{titulo:"El piso 13 sigue ejecutando pruebas", texto:"Muchas decisiones quedaron a medias y el equipo sigue cansado. La noche del siguiente lanzamiento, una sesión abierta vuelve a encenderse en QA-LAB-13. Hay mucho trabajo pendiente en Recursos Humanos."}
+};
+
+/* =========================================================
+   ESTADO Y UTILIDADES
+   ========================================================= */
+const TIEMPO_ESCENA = 60;
+const $ = id => document.getElementById(id);
+const stage = $("stage");
+
+let S = null; // estado de la partida
+let reloj = null;
+
+const esc = t => String(t).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const clamp = v => Math.max(0, Math.min(100, v));
+const fmt = s => String(Math.floor(s/60)).padStart(2,"0") + ":" + String(s%60).padStart(2,"0");
+const barajar = a => { const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [b[i],b[j]]=[b[j],b[i]];} return b; };
+const nom = t => t.replaceAll("{n}", esc(S.nombre));
+
+function nuevaPartida(nombre){
+  S = {nombre, idx:0, score:0, amor:30, calma:70, seg:0, tLeft:TIEMPO_ESCENA, activo:false, historial:[], opcionesVista:[]};
+  $("meters").hidden = false;
+  actualizarHUD();
+  clearInterval(reloj);
+  reloj = setInterval(tick, 1000);
+}
+
+function tick(){
+  if(!S || !S.activo) return;
+  S.seg++;
+  S.tLeft--;
+  $("clock").textContent = fmt(S.seg);
+  const barra = $("tbarFill");
+  if(barra){
+    barra.style.width = (S.tLeft / TIEMPO_ESCENA * 100) + "%";
+    barra.parentElement.classList.toggle("urge", S.tLeft <= 15);
+  }
+  if(S.tLeft <= 0) tiempoAgotado();
+}
+
+function actualizarHUD(){
+  $("score").textContent = S.score;
+  $("clock").textContent = fmt(S.seg);
+  $("barAmor").style.width = S.amor + "%";
+  $("barCalma").style.width = S.calma + "%";
+  document.documentElement.style.setProperty("--calma", S.calma);
+}
+
+/* =========================================================
+   PANTALLAS
+   ========================================================= */
+function pantallaInicio(){
+  $("meters").hidden = true;
+  $("score").textContent = "0";
+  $("clock").textContent = "00:00";
+  document.documentElement.style.setProperty("--calma", 100);
+  stage.innerHTML = `
+    <section class="card">
+      <h1 class="parpadeo">Piso 13: Turno de Medianoche</h1>
+      <p class="lugar">Una historia de amor, miedo y Recursos Humanos en un equipo de pruebas de software</p>
+      <p class="nar">TicoSoft tiene un piso que nadie quiere pisar de noche. Tres personas de QA renunciaron en seis meses, y algo en el laboratorio sigue ejecutando pruebas cuando todos se van.</p>
+      <p class="nar">Tú eres la nueva analista de Recursos Humanos. Toma decisiones sobre reclutamiento, onboarding, carga de trabajo, conflictos, ética y reconocimiento. Cada decisión cambia tu puntaje, la conexión con Mateo y tu calma.</p>
+      <p class="nar">Tienes 60 segundos por decisión. Si tu calma llega a cero, el piso 13 te atrapa.</p>
+      <label for="nombre" class="pregunta">¿Cómo te llamas?</label>
+      <input id="nombre" class="nombre" maxlength="20" placeholder="Tu nombre" autocomplete="off">
+      <button class="btn" id="btnIniciar">Entrar al piso 13</button>
+    </section>`;
+  const input = $("nombre");
+  const iniciar = () => {
+    const n = input.value.trim() || "Valeria";
+    nuevaPartida(n);
+    pantallaEscena();
+  };
+  $("btnIniciar").onclick = iniciar;
+  input.addEventListener("keydown", e => { if(e.key==="Enter") iniciar(); });
+  input.focus();
+}
+
+function pantallaEscena(){
+  const e = ESCENAS[S.idx];
+  S.tLeft = TIEMPO_ESCENA;
+  S.opcionesVista = barajar(e.opciones);
+  const parrafos = e.texto.map(([tipo, t]) => `<p class="${tipo}">${nom(esc0(t))}</p>`).join("");
+  const log = e.log ? `<div class="log">${e.log.join("\n")}</div>` : "";
+  const opts = S.opcionesVista.map((o,i) =>
+    `<button class="opt" data-i="${i}">${nom(esc0(o.txt))}</button>`).join("");
+  stage.innerHTML = `
+    <section class="card">
+      <div class="tbar"><i id="tbarFill" style="width:100%"></i></div>
+      <h2 class="${S.calma<30?'parpadeo':''}">${S.idx+1}. ${e.titulo}</h2>
+      <p class="lugar">${e.lugar}</p>
+      ${parrafos}
+      ${log}
+      <p class="pregunta">${e.pregunta}</p>
+      <div class="opciones">${opts}</div>
+    </section>`;
+  stage.querySelectorAll(".opt").forEach(b => b.onclick = () => elegir(+b.dataset.i));
+  S.activo = true;
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+/* el contenido de ESCENAS es de confianza (lo escribes tú), así que no se escapa;
+   solo se escapa el nombre ingresado por la persona */
+function esc0(t){ return t; }
+
+function aplicar(o, puntosBase, bonus){
+  const antes = {amor:S.amor, calma:S.calma};
+  S.score += puntosBase + bonus;
+  S.amor = clamp(S.amor + o.amor);
+  S.calma = clamp(S.calma + o.calma);
+  actualizarHUD();
+  return {puntos:puntosBase + bonus, dAmor:S.amor-antes.amor, dCalma:S.calma-antes.calma};
+}
+
+function elegir(i){
+  if(!S.activo) return;
+  S.activo = false;
+  const e = ESCENAS[S.idx];
+  const o = S.opcionesVista[i];
+  const base = o.tipo==="ok" ? 100 : o.tipo==="mid" ? 50 : 0;
+  const bonus = o.tipo==="bad" ? 0 : Math.floor(S.tLeft/6);
+  const r = aplicar(o, base, bonus);
+  S.historial.push({titulo:e.titulo, tipo:o.tipo});
+  pantallaResultado(e, o, r);
+}
+
+function tiempoAgotado(){
+  if(!S.activo) return;
+  S.activo = false;
+  const e = ESCENAS[S.idx];
+  const o = {tipo:"bad", amor:-5, calma:-10,
+    res:"El tiempo se agotó y no lograste decidir. En el piso 13, dudar tiene un precio: las luces parpadean y sientes que alguien respira detrás de ti."};
+  const r = aplicar(o, 0, 0);
+  S.historial.push({titulo:e.titulo, tipo:"bad"});
+  pantallaResultado(e, o, r);
+}
+
+function pantallaResultado(e, o, r){
+  const etiqueta = {ok:"Decisión sólida", mid:"Decisión aceptable", bad:"Decisión riesgosa"}[o.tipo];
+  const ideal = e.opciones.find(x => x.tipo==="ok");
+  const pista = o.tipo==="ok" ? "" :
+    `<p class="ideal">La mejor decisión era: ${nom(ideal.txt)}</p>`;
+  const signo = n => (n>0?"+":"") + n;
+  stage.innerHTML = `
+    <section class="card">
+      <span class="tag ${o.tipo}">${etiqueta}</span>
+      <h2>${e.titulo}</h2>
+      <p class="nar" style="margin-top:.8rem">${nom(o.res)}</p>
+      <div class="cambios">
+        <span>⭐ ${signo(r.puntos)}</span>
+        <span>♥ ${signo(r.dAmor)}</span>
+        <span>🕯 ${signo(r.dCalma)}</span>
+      </div>
+      ${pista}
+      <div class="leccion"><strong>Lección de Recursos Humanos:</strong> ${e.leccion}</div>
+      <button class="btn" id="btnSig">${S.calma<=0 || S.idx===ESCENAS.length-1 ? "Ver desenlace" : "Continuar"}</button>
+    </section>`;
+  $("btnSig").onclick = siguiente;
+  $("btnSig").focus();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function siguiente(){
+  if(S.calma <= 0) return pantallaFinal("oscuridad");
+  S.idx++;
+  if(S.idx >= ESCENAS.length){
+    const max = ESCENAS.length * 100;
+    let clave;
+    if(S.score >= max*0.8 && S.amor >= 60) clave = "mejor";
+    else if(S.amor >= 60) clave = "amor";
+    else if(S.score >= max*0.6) clave = "pro";
+    else clave = "malo";
+    return pantallaFinal(clave);
+  }
+  pantallaEscena();
+}
+
+function pantallaFinal(clave){
+  S.activo = false;
+  clearInterval(reloj);
+  const f = FINALES[clave];
+  const icono = {ok:"✅", mid:"🟡", bad:"❌"};
+  const lista = S.historial.map(h => `<li><span>${icono[h.tipo]}</span><span>${h.titulo}</span></li>`).join("");
+  stage.innerHTML = `
+    <section class="card">
+      <h1 class="${clave==='mejor'?'':'parpadeo'}">${f.titulo}</h1>
+      <p class="nar">${nom(f.texto)}</p>
+      <div class="stats">
+        <div class="stat"><b>${S.score}</b>Puntos</div>
+        <div class="stat"><b>${S.amor}%</b>Conexión</div>
+        <div class="stat"><b>${S.calma}%</b>Calma</div>
+        <div class="stat"><b>${fmt(S.seg)}</b>Tiempo</div>
+      </div>
+      <p class="pregunta">Tus decisiones</p>
+      <ul class="resumen">${lista}</ul>
+      <button class="btn" id="btnOtra">Jugar de nuevo</button>
+    </section>`;
+  $("btnOtra").onclick = pantallaInicio;
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+pantallaInicio();
+
+/* FUNCIONES EXTRA: sonido, logros, sustos y exploración */
+let sonidoActivo=false;
+let audioCtx=null;
+let eventoUsado=-1;
+let pistaUsada=-1;
+let objetos=[];
+const MENSAJES_SUSTO=[
+ "El teclado de Ana escribe solo: ¿YA REVISASTE LOS CASOS DE PRUEBA?",
+ "Una voz susurra: la calidad también depende de las personas...",
+ "Una sombra cruza el laboratorio. Deja una nota: ¡DOCUMENTÁ LOS DEFECTOS!",
+ "La puerta 13 se cierra. Alguien olvidó hacer la retrospectiva...",
+ "El monitor parpadea: ERROR 404 — DESCANSO NO ENCONTRADO."
+];
+const OBJETOS=["🗝 Llave del laboratorio","🕯 Vela de Ana","📋 Checklist QA","☕ Café de Mateo","🔍 Lupa de defectos","💾 Disco de evidencias"];
+function beep(f=200,d=.13){
+ if(!sonidoActivo)return;
+ try{
+  audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type="sine";o.frequency.value=f;g.gain.value=.035;
+  o.connect(g);g.connect(audioCtx.destination);o.start();
+  g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+d);
+  o.stop(audioCtx.currentTime+d);
+ }catch(e){}
+}
+function toast(msg){
+ const el=$("toast");el.textContent=msg;el.classList.add("show");
+ clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove("show"),2800);
+}
+function progreso(){
+ const n=S?S.idx:0;
+ $("progressFill").style.width=(n/ESCENAS.length*100)+"%";
+ $("progressText").textContent=S?`Sala ${Math.min(n+1,ESCENAS.length)} de ${ESCENAS.length} · ${Math.round(n/ESCENAS.length*100)}% completado`:`${ESCENAS.length} decisiones te esperan`;
+}
+function susto(){
+ if(!S||!S.activo)return toast("Entrá primero al piso 13.");
+ S.activo=false;
+ $("scareText").textContent=MENSAJES_SUSTO[Math.floor(Math.random()*MENSAJES_SUSTO.length)];
+ $("scareModal").classList.add("show");
+ $("ghost").style.left=(25+Math.random()*50)+"%";
+ $("ghost").style.top=(25+Math.random()*50)+"%";
+ $("ghost").classList.add("visible");
+ $("flash").classList.remove("blink");void $("flash").offsetWidth;$("flash").classList.add("blink");
+ beep(110,.45);
+}
+$("scareClose").onclick=()=>{
+ $("scareModal").classList.remove("show");$("ghost").classList.remove("visible");
+ if(S)S.activo=true;
+};
+$("soundToggle").onclick=()=>{
+ sonidoActivo=!sonidoActivo;
+ $("soundToggle").textContent=sonidoActivo?"🔊 Sonido: activado":"🔇 Sonido: apagado";
+ beep(440,.15);
+};
+$("hintButton").onclick=()=>{
+ if(!S||!S.activo)return toast("Iniciá una partida para pedir pistas.");
+ if(pistaUsada===S.idx)return toast("Ya usaste tu pista en esta sala.");
+ if(S.score<20)return toast("Necesitás al menos 20 estrellas para comprar una pista.");
+ pistaUsada=S.idx;S.score-=20;actualizarHUD();
+ const correct=ESCENAS[S.idx].opciones.find(x=>x.tipo==="ok");
+ toast("🔮 La mejor opción empieza así: "+correct.txt.slice(0,58)+"...");
+};
+$("eventButton").onclick=()=>{
+ if(!S||!S.activo)return toast("Primero entrá al juego.");
+ if(eventoUsado===S.idx)return toast("Ya exploraste el misterio de esta sala.");
+ eventoUsado=S.idx;
+ if(Math.random()<.5){
+  const objeto=OBJETOS[Math.floor(Math.random()*OBJETOS.length)];
+  if(!objetos.includes(objeto))objetos.push(objeto);
+  S.score+=15;actualizarHUD();toast("🎁 Encontraste: "+objeto+" (+15 ⭐)");beep(620,.2);
+ }else{
+  S.calma=clamp(S.calma-4);actualizarHUD();susto();
+ }
+};
+$("inventoryButton").onclick=()=>{
+ const el=$("inventory");el.classList.toggle("show");
+ el.innerHTML=objetos.length?objetos.map(x=>`<span>${x}</span>`).join(""):"Todavía no encontraste objetos. Probá un evento misterioso.";
+};
+const originalNueva=nuevaPartida;
+nuevaPartida=function(nombre){
+ objetos=[];eventoUsado=-1;pistaUsada=-1;
+ originalNueva(nombre);progreso();
+};
+const originalEscena=pantallaEscena;
+pantallaEscena=function(){originalEscena();progreso();beep(210,.1)};
+const originalElegir=elegir;
+elegir=function(i){
+ if(S&&S.activo){
+  const tipo=S.opcionesVista[i]?.tipo;
+  if(tipo==="ok")beep(560,.2);else beep(160,.25);
+ }
+ originalElegir(i);
+};
+const originalFinal=pantallaFinal;
+pantallaFinal=function(clave){originalFinal(clave);progreso();
+ const panel=stage.querySelector(".card");
+ const extra=document.createElement("div");extra.className="leccion";
+ extra.textContent=`🏆 Coleccionaste ${objetos.length} objetos misteriosos. Completaste ${S.historial.length} decisiones sobre recursos humanos y QA.`;
+ panel.insertBefore(extra,panel.lastElementChild);
+};
+progreso();
+
+</script>
+</body>
+</html>
